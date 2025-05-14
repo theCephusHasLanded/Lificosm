@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  lificosm-webrtc:
+    build: .
+    ports:
+      - "8080:8080"
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "49152-65535:49152-65535/udp"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-86400000}
+      - JWT_REFRESH_EXPIRATION_MS=${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      - TURN_SECRET=${TURN_SECRET}
+      - TURN_SERVER_REALM=${TURN_SERVER_REALM:-lificosm.com}
+      - TURN_SERVER_PORT=${TURN_SERVER_PORT:-3478}
+      - STUN_SERVER_URL=${STUN_SERVER_URL:-stun.l.google.com:19302}
+      - SERVER_ADDRESS=${SERVER_ADDRESS:-lificosm.com}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      - KMS_URL=${KMS_URL:-ws://kurento-media-server:8888/kurento}
+      - DB_URL=${DB_URL:-jdbc:h2:mem:lificosmdb}
+      - DB_USERNAME=${DB_USERNAME:-sa}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+    volumes:
+      - recordings:/var/recordings
+    networks:
+      - lificosm-network
+    restart: unless-stopped
+    depends_on:
+      - kurento-media-server
+
+  kurento-media-server:
+    image: kurento/kurento-media-server:latest
+    networks:
+      - lificosm-network
+    environment:
+      - KMS_STUN_IP=${STUN_SERVER_URL:-stun.l.google.com}
+      - KMS_STUN_PORT=19302
+      - KMS_TURN_URL=lificosm:${TURN_SECRET:-changeit}@lificosm-webrtc:${TURN_SERVER_PORT:-3478}
+    ports:
+      - "8888:8888"
+    restart: unless-stopped
+    volumes:
+      - recordings:/var/recordings
+
+networks:
+  lificosm-network:
+    driver: bridge
+
+volumes:
+  recordings:
+    driver: local

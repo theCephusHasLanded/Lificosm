@@ -1,0 +1,101 @@
+server:
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: lificosm-webrtc
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        show_sql: false
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:lificosmdb}
+    driverClassName: org.h2.Driver
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:password}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  security:
+    csrf:
+      enabled: false
+
+# JWT Configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:lificosm-webrtc-secret-key-for-jwt-token-generation}
+    expiration:
+      ms: ${JWT_EXPIRATION_MS:86400000}
+    refresh:
+      ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+# Kurento Media Server settings
+kurento:
+  client:
+    url: ${KMS_URL:ws://localhost:8888/kurento}
+
+# STUN/TURN server configuration
+turn:
+  server:
+    urls:
+      - stun:${STUN_SERVER_URL:stun.l.google.com:19302}
+      - turn:${SERVER_ADDRESS:localhost}:${TURN_SERVER_PORT:3478}
+    username: lificosm
+    credential: ${TURN_SECRET:changeit}
+    ttl: 86400
+    
+# WebRTC settings    
+webrtc:
+  connection:
+    ice-servers-refresh-interval: 43200000 # 12 hours in milliseconds
+    timeout: 30000 # 30 seconds in milliseconds
+  recording:
+    enabled: true
+    path: /var/recordings
+    format: webm
+  quality:
+    default-bitrate: 1000 # 1 Mbps
+    min-bitrate: 100 # 100 Kbps
+    max-bitrate: 5000 # 5 Mbps
+    monitor-interval: 5000 # 5 seconds in milliseconds
+
+# Stream authorization settings
+stream:
+  auth:
+    token-validity: 86400 # 24 hours in seconds
+
+# Actuator and monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      sla:
+        http.server.requests: 10ms, 50ms, 100ms, 500ms
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.lificosm: ${LOG_LEVEL:DEBUG}
+    org.kurento: INFO
+    org.springframework.web: INFO

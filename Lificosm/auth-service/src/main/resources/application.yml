@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: auth-service
+  config:
+    import: optional:configserver:http://config-server:8888
+  datasource:
+    url: jdbc:postgresql://postgres:5432/lificosm_auth
+    username: postgres
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://discovery-service:8761/eureka/
+
+# JWT Configuration
+app:
+  jwt:
+    secret: ${JWT_SECRET:lificosm-auth-service-secret-key-for-jwt-token-generation}
+    expiration:
+      ms: ${JWT_EXPIRATION_MS:86400000}
+    refresh:
+      ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    com.lificosm: ${LOG_LEVEL:DEBUG}
+    org.springframework.web: INFO
